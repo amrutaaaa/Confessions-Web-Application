@@ -256,11 +256,10 @@ function princeDecryption(ciphertext, key){
 
 const express = require("express")
 const ejs = require("ejs")
-const session = require('express-session');
+const session = require('cookie-session');
 const bodyParser= require("body-parser")
 const mongoose = require("mongoose");
 const buffer = require('buffer')
-const MongoStore = require('connect-mongo')(session);
 
 const encKey = process.env.PRINCE_KEY;
 
@@ -273,7 +272,6 @@ app.set('view engine', 'ejs');
 app.use(session({
     resave: false,
     saveUninitialized: true,
-    store: new MongoStore(),
     secret: process.env.SESSION_SECRET
 }));
 
