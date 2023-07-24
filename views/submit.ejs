@@ -10,11 +10,10 @@
     <h1 class="display-3">Confessions</h1>
     <p class="secret-text">Share confessions anonymously!</p>
 
-    <form action="/submit" method="POST">
+    <form class="form-group" action="/submit" method="POST">
 
-      <div class="form-group">
 
-        <textarea  rows="5" style="box-sizing:border-box; -moz-box-sizing:border-box;" name="secret" placeholder="What's your confession?"></textarea><br>
+        <textarea  rows="5" style="width: 98%;" name="secret" placeholder="What's your confession?"></textarea><br>
         <label for="target">Who's your confession for? </label>
         <select name="target" id="target" class="form-control text-center" placeholder="Select A User">
           <option value="select"></option>
@@ -22,7 +21,6 @@
             <option value="<%= names[i]%>"><%= names[i] %></option>
             <% } %>    
         </select>
-      </div>
       <button type="submit" class="btn btn-dark">Submit</button>
     </form>
 
