@@ -260,12 +260,11 @@ const session = require('cookie-session');
 const bodyParser= require("body-parser")
 const mongoose = require("mongoose");
 const buffer = require('buffer')
+const cookieParser = require('cookie-parser');
 
 const encKey = process.env.PRINCE_KEY;
 
 const app = express()
-
-var currentUser="";
 
 app.set('view engine', 'ejs');
 
@@ -277,6 +276,7 @@ app.use(session({
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
+app.use(cookieParser());
 
 // mongoose.connect("mongodb://0.0.0.0:27017/newconfessionsDB");
 
@@ -333,6 +333,7 @@ passport.use(new GoogleStrategy({
       return done(null, userProfile);
   }
 ));
+
  
 app.get('/auth/google', 
   passport.authenticate('google', { scope : ['profile', 'email'] }));
@@ -340,6 +341,10 @@ app.get('/auth/google',
 app.get('/auth/google/callback', 
   passport.authenticate('google', { failureRedirect: '/error' }),
   function(req, res) {
+    res.cookie('userInfo', JSON.stringify(userProfile), {
+        httpOnly : true,
+        secure : true,
+    });
     // Successful authentication, redirect success.
     User.findOne({googleid: userProfile.id}, function(err, matchedUser){
         if (matchedUser==null){
@@ -351,10 +356,13 @@ app.get('/auth/google/callback',
     })
   });
 
+
 app.get("/", function(req, res){
-    if (userProfile){
-        User.findOne({googleid: userProfile.id}, function(err, matchedUser){
-            currentUser = matchedUser.username;
+    var userCookie = req.cookies.userInfo;
+    if (userCookie!=undefined){
+        var userInfo = JSON.parse(userCookie)
+        User.findOne({googleid: userInfo.id}, function(err, matchedUser){
+            var currentUser = matchedUser.username;
 
             allConfessions=[];
             let userConfess = matchedUser.confessions;
@@ -394,19 +402,22 @@ app.get("/", function(req, res){
 })
 
 app.get("/register", function(req, res){
-    let defName = userProfile.displayName;
+    var userInfo = JSON.parse(req.cookies.userInfo);
+    let defName = userInfo.displayName;
     res.render("register", {defaultName: defName, username:"", message:""})
 })
 
 app.post("/register", function(req, res){
     let username = req.body.username;
     let name = req.body.name;
+
+    var userInfo = JSON.parse(req.cookies.userInfo);
     
     User.findOne({username: username}, function(err, matchedUser){
         if (matchedUser==null){
             const user= new User({
-                email: userProfile.emails[0].value,
-                googleid: userProfile.id,
+                email: userInfo.emails[0].value,
+                googleid: userInfo.id,
                 username: username,
                 name: name,
                 date: [],
@@ -418,43 +429,21 @@ app.post("/register", function(req, res){
             res.redirect("/")
 
         } else{
-            let defName = userProfile.displayName;
+            let defName = userInfo.displayName;
             res.render("register", {defaultName: defName, username:username, message:"Username unavailable"})
         }
     })
 })
 
-// app.get("/login", function(req, res){
-//     res.render("login", {message:""})
-// })
-
-// app.post("/login", function(req, res){
-//     let username = req.body.username;
-//     let password = req.body.password;
-
-//     user = username;
-
-//     User.findOne({email: username}, function(err, user){
-//         if (err){
-//             console.log(err);
-//         } else{
-//             bcrypt.compare(password, user.password, function(err, result){
-//                 if (err){
-//                     console.log(err);
-//                 } else{
-//                     if (result){
-//                         res.render("secrets")
-//                     } else{
-//                         res.render("login", {message: "Wrong password, please try again."})
-//                     }
-//                 }
-//             })
-//         }
-//     })
-// })
 
 app.get("/submit", function(req, res){
-    if (userProfile){
+    var userCookie = req.cookies.userInfo
+    if (userCookie!=undefined){
+        var userInfo = JSON.parse(userCookie)
+        var currentUser=""
+        User.findOne({googleid: userInfo.id}, function(err, matchedUser){
+            currentUser = matchedUser.username;
+        });
         let names=[]
         User.find(function(err, users){
             for (let x=0;x<users.length;x++){
@@ -520,42 +509,9 @@ app.get("/submitted", function(req, res){
     res.render("success")
 })
 
-// app.get("/confessions", function(req, res){
-//     if (user==""){
-//         res.render("login", {message: "To see your confessions, log in."})
-//     } else{
-//     allConfessions=[];
-//     User.findOne({email: user}, function(err, matchedUser){
-//         if (err){
-//             console.log(err)
-//         } else{
-//             let userConfess = matchedUser.confessions;
-//             for (let c=0; c<userConfess.length; c++){
-//                 let cipherText = userConfess[c];
-//                 let actualMessage=""
-//                 for (let d=0; d< cipherText.length/16; d++){
-//                     actualMessage+=princeDecryption(cipherText.slice(d*16, (d+1)*16), encKey)
-//                 }
-//                 for (let i=0; i<actualMessage.length; i=i+2){
-//                     if (actualMessage[i]==="0"){
-//                         if (actualMessage[i+1]==="0"){
-//                             actualMessage = actualMessage.slice(0,i);
-//                             break
-//                         }
-//                     }
-//                 }
-//                 let decoded = buffer.Buffer.from(actualMessage, 'hex').toString();
-//                 allConfessions.push(decoded)
-//             }
-
-//             res.render("confessions", {confessions: allConfessions})
-//         }
-//     })
-// }
-// })
-
 app.get("/logout", function(req, res){
     userProfile=null;
+    res.clearCookie("userInfo")
     res.redirect("/")
 })
 
