@@ -261,6 +261,7 @@ const bodyParser= require("body-parser")
 const mongoose = require("mongoose");
 const buffer = require('buffer')
 const cookieParser = require('cookie-parser');
+const sanitize = require('mongo-sanitize');
 
 const encKey = process.env.PRINCE_KEY;
 
@@ -408,8 +409,8 @@ app.get("/register", function(req, res){
 })
 
 app.post("/register", function(req, res){
-    let username = req.body.username;
-    let name = req.body.name;
+    let username = sanitize(req.body.username);
+    let name = sanitize(req.body.name);
 
     var userInfo = JSON.parse(req.cookies.userInfo);
     
@@ -460,8 +461,8 @@ app.get("/submit", function(req, res){
 })
 
 app.post("/submit", function(req, res){
-    let target = req.body.target;
-    let message = req.body.secret;
+    let target = sanitize(req.body.target);
+    let message = sanitize(req.body.secret);
 
     let start = target.indexOf("(") + 1;
     let end = target.indexOf(")");
