@@ -1,0 +1,33 @@
+<%- include('partials/header') %>
+<div class="container mt-5">
+  <h1>Welcome, First Time User!</h1>
+
+  <div class="row">
+    <div class="col-sm-8">
+      <div class="card">
+        <div class="card-body">
+
+          <!-- Makes POST request to /register route -->
+          <form action="/register" method="POST">
+            <div class="form-group">
+              <label for="text">Choose a display name: </label>
+              <input type="text" class="form-control" name="username" value= <%= username %>>
+              <p style="color: red;"><%= message %></p>
+            </div>
+            <div class="form-group">
+              <label for="text">Your Name:</label>
+              <input type="text" class="form-control" name="name", value= "<%= defaultName %>">
+            </div>
+            <button type="submit" class="btn btn-dark">Register</button>
+          </form>
+          <br>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+
+<%- include('partials/footer') %>
